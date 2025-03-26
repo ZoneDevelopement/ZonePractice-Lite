@@ -121,6 +121,7 @@ match:
     match-end-draw:
       - "&7&m----------------------------------------"
       - "&cThe match is ended with no winner or loser."
+      - "&bSpectators (%size%): &7%spectators%"
       - "&7&m----------------------------------------"
   partyffa:
     player-die: "&c%player% died."
