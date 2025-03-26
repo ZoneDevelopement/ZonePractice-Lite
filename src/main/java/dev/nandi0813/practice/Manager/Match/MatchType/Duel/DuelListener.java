@@ -23,16 +23,12 @@ public class DuelListener implements Listener {
 
             if (profile.getStatus().equals(ProfileStatus.MATCH) && match.getType().equals(MatchType.DUEL)) {
                 if (match.getStatus().equals(MatchStatus.LIVE)) {
-                    if (e.getCause().equals(EntityDamageEvent.DamageCause.VOID)) {
-                        e.setCancelled(true);
-                        Duel.killPlayer(match, player, true);
-                    }
+                    boolean isVoid = e.getCause().equals(EntityDamageEvent.DamageCause.VOID);
 
-                    if (player.getHealth() - e.getFinalDamage() <= 0) {
-                        if (e.getCause().equals(EntityDamageEvent.DamageCause.ENTITY_EXPLOSION) || e.getCause().equals(EntityDamageEvent.DamageCause.BLOCK_EXPLOSION))
-                            e.setCancelled(true);
-
-                        Duel.killPlayer(match, player, false);
+                    if (isVoid || player.getHealth() - e.getFinalDamage() <= 0) {
+                        Duel.killPlayer(match, player, isVoid);
+                        // Apply damage animation to die.
+                        player.damage(0);
                     }
                 } else {
                     e.setCancelled(true);
