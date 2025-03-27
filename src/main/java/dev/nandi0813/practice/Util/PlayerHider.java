@@ -77,11 +77,12 @@ public class PlayerHider implements Listener {
                                 p.hidePlayer(player);  // Players in the match do not see the spectator
                             } else if (match.getSpectators().contains(p)) {
                                 if (ConfigManager.getBoolean("match-settings.hide-other-spectators")) {
-                                    player.hidePlayer(p);  // Hide other spectators if configured
+                                    player.hidePlayer(p);
+                                    p.hidePlayer(player);
                                 } else {
-                                    player.showPlayer(p);  // Show other spectators if not hidden
+                                    player.showPlayer(p);
+                                    p.showPlayer(player);
                                 }
-                                p.hidePlayer(player);  // Other spectators do not see this spectator
                             } else {
                                 player.hidePlayer(p);  // Spectator does not see players from other matches
                                 p.hidePlayer(player);  // Players outside the match do not see the spectator
@@ -114,3 +115,4 @@ public class PlayerHider implements Listener {
         }
     }
 }
+

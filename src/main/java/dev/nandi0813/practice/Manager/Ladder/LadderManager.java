@@ -40,7 +40,6 @@ public class LadderManager {
      * Loads all the ladders into the ladders list
      */
     public void loadLadders() {
-        Bukkit.getScheduler().runTaskAsynchronously(Practice.getInstance(), () ->
         {
             ladders.clear();
             rankedLadders.clear();
@@ -60,7 +59,7 @@ public class LadderManager {
                     }
                 }
             }
-        });
+        }
     }
 
     public void saveLadders() {

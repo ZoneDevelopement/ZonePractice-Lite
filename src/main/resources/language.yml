@@ -143,7 +143,6 @@ match:
     match-end-draw:
       - "&7&m----------------------------------------"
       - "&cThe match is ended with no winner."
-      - "&bSpectators (%size%): &7%spectators%"
       - "&7&m----------------------------------------"
   partysplit:
     player-die: "&c%player% died. &7(%playerTeam%&7) - &e%playerTeamLeft% &7players left in their team."
@@ -168,7 +167,6 @@ match:
     match-end-draw:
       - "&7&m----------------------------------------"
       - "&cThe match is ended with no winner."
-      - "&bSpectators (%size%): &7%spectators%"
       - "&7&m----------------------------------------"
   teams:
     team1: "&9Team 1"

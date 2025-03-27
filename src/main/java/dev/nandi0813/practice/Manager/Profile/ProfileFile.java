@@ -6,12 +6,9 @@ import dev.nandi0813.practice.Practice;
 import dev.nandi0813.practice.Util.ItemSerializationUtil;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ProfileFile {
 
@@ -33,8 +30,13 @@ public class ProfileFile {
 
         // Elo
         for (Ladder ladder : Practice.getLadderManager().getLadders()) {
-            if (ladder.isRanked())
-                config.set("stats.elo." + ladder.getName(), profile.getElo().get(ladder));
+            if (ladder.isRanked()) {
+                Integer eloValue = profile.getElo().get(ladder);
+                if (eloValue == null) {
+                    eloValue = ConfigManager.getInt("ranked.default-elo"); 
+                }
+                config.set("stats.elo." + ladder.getName(), eloValue);
+            }
         }
 
         // Summarized wins/losses
@@ -121,8 +123,10 @@ public class ProfileFile {
         if (eloSection != null) {
             for (String ladderName : config.getConfigurationSection("stats.elo").getKeys(false)) {
                 Ladder ladder = Practice.getLadderManager().getLadder(ladderName);
-                if (ladder != null && ladder.isRanked() && config.isSet("stats.elo." + ladder.getName()))
-                    profile.getElo().put(ladder, config.getInt("stats.elo." + ladder.getName()));
+                if (ladder != null && ladder.isRanked()) {
+                    int eloValue = config.getInt("stats.elo." + ladder.getName(), ConfigManager.getInt("ranked.default-elo"));
+                    profile.getElo().put(ladder, eloValue);
+                }
             }
         }
 
