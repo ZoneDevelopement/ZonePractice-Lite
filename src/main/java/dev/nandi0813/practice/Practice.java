@@ -1,6 +1,8 @@
 package dev.nandi0813.practice;
 
-import com.comphenix.protocol.ProtocolLibrary;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketEvent;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import dev.nandi0813.practice.Command.Arena.ArenaCommand;
 import dev.nandi0813.practice.Command.Arena.ArenaTabCompleter;
 import dev.nandi0813.practice.Command.Ladder.LadderCommand;
@@ -175,11 +177,8 @@ public final class Practice extends JavaPlugin {
     }
 
     public static void registerPacketListener() {
-        try {
-            ProtocolLibrary.getProtocolManager().addPacketListener(new EntityHiderListener());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        PacketEvents.getAPI().getEventManager().registerListener(
+                new EntityHiderListener(), PacketListenerPriority.NORMAL);
     }
 
     @Override

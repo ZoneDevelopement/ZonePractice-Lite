@@ -1,9 +1,16 @@
 package dev.nandi0813.practice.Util.EntityHider;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListener;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.util.Vector3i;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEffect;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntitySoundEffect;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
 import dev.nandi0813.practice.Manager.Match.Match;
 import dev.nandi0813.practice.Manager.Profile.Profile;
 import dev.nandi0813.practice.Manager.Profile.ProfileStatus;
@@ -20,57 +27,58 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.wrappers.BlockPosition;
+public class EntityHiderListener implements PacketListener, Listener {
 
-public class EntityHiderListener extends PacketAdapter implements Listener {
+    @Override
+    public void onPacketSend(PacketSendEvent event) {
+        if (event.getPacketType() == PacketType.Play.Server.SOUND_EFFECT ||
+                event.getPacketType() == PacketType.Play.Server.NAMED_SOUND_EFFECT) {
+            WrapperPlayServerSoundEffect wrapper = new WrapperPlayServerSoundEffect(event);
 
-    @Getter
-    public static List<BlockPosition> blockPositions = new ArrayList<>();
+            Player player = event.getPlayer();
+            Vector3i position = wrapper.getEffectPosition();
 
-    public EntityHiderListener() {
-        super(Practice.getInstance(), PacketType.Play.Server.NAMED_ENTITY_SPAWN, PacketType.Play.Server.SPAWN_ENTITY, PacketType.Play.Server.NAMED_SOUND_EFFECT, PacketType.Play.Server.WORLD_EVENT);
-    }
-
-    public void onPacketSending(PacketEvent event) {
-        Player player = event.getPlayer();
-        try {
-            PacketContainer packet = event.getPacket();
-            PacketType type = packet.getType();
-            if (type == PacketType.Play.Server.NAMED_SOUND_EFFECT) {
-                double x = packet.getIntegers().read(0) / 8.0;
-                double y = packet.getIntegers().read(1) / 8.0;
-                double z = packet.getIntegers().read(2) / 8.0;
-                Player nearestPlayer = null;
-                double nearestDistance = 5.0;
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    double deltaX = p.getLocation().getX() - x;
-                    double deltaY = p.getLocation().getY() - y;
-                    double deltaZ = p.getLocation().getZ() - z;
-                    double distance = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
-                    if (distance < nearestDistance) {
-                        nearestPlayer = p;
-                        nearestDistance = distance;
-                    }
-                }
-                if (nearestPlayer != null && !player.canSee(nearestPlayer)) {
-                    event.setCancelled(true);
-                }
-            } else if (type == PacketType.Play.Server.WORLD_EVENT) {
-                BlockPosition bp = packet.getBlockPositionModifier().getValues().get(0);
-                if (getBlockPositions().contains(bp)) {
-                    getBlockPositions().remove(bp);
-                    return;
-                }
+            if (shouldCancelSound(player, position)) {
                 event.setCancelled(true);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+
+        if (event.getPacketType() == PacketType.Play.Server.EFFECT) {
+            WrapperPlayServerEffect wrapper = new WrapperPlayServerEffect(event);
+            Player player = event.getPlayer();
+            Vector3i position = wrapper.getPosition();
+            Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
+
+            if (match != null && match.effectPositions.contains(position)) {
+                match.effectPositions.remove(position);
+                Bukkit.broadcastMessage("Passed: " + event.getUser().getName());
+            } else {
+                Bukkit.broadcastMessage("Cancelled: " + event.getUser().getName());
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    private boolean shouldCancelSound(Player player, Vector3i position) {
+        Player nearestPlayer = null;
+        double nearestDistance = 5.0;
+
+        for (Player somePlayer : Bukkit.getOnlinePlayers()) {
+            double distance = somePlayer.getLocation().distance(
+                    new Location(somePlayer.getWorld(),
+                            position.x / 8.,
+                            position.y / 8.,
+                            position.z / 8.));
+
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestPlayer = somePlayer;
+            }
+        }
+
+        Bukkit.broadcastMessage("nearest: " + (nearestPlayer == null ? "null" : nearestPlayer.getName()) + " d: " + nearestDistance);
+
+        return nearestPlayer != null && !player.canSee(nearestPlayer);
     }
 
     @EventHandler
@@ -84,20 +92,21 @@ public class EntityHiderListener extends PacketAdapter implements Listener {
                 Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
 
                 if (profile.getStatus().equals(ProfileStatus.MATCH) && match != null && !match.getLadder().isBuild()) {
-                    PacketContainer packet = new PacketContainer(PacketType.Play.Server.WORLD_EVENT);
-
-                    packet.getIntegers().write(0, 2002);
                     Location location = projectile.getLocation();
-                    BlockPosition bp = new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-                    packet.getBlockPositionModifier().write(0, bp);
-                    packet.getIntegers().write(1, (int) potion.getItem().getDurability());
-                    packet.getBooleans().write(0, false);
+                    Vector3i convertedLocation = new Vector3i(location.getBlockX(),
+                            location.getBlockY(),
+                            location.getBlockZ());
 
-                    EntityHiderListener.blockPositions.add(bp);
-                    EntityHiderListener.blockPositions.add(bp);
+                    WrapperPlayServerEffect packet = new WrapperPlayServerEffect(
+                            2002, // Effect ID (potion break)
+                            convertedLocation, // Position
+                            potion.getItem().getDurability(), // Effect data (potion color)
+                            false // Disable relative volume
+                    );
 
-                    for (Player matchPlayer : match.getPlayers())
-                        ProtocolLibrary.getProtocolManager().sendServerPacket(matchPlayer, packet);
+                    for (Player matchPlayer : match.getPlayers()) {
+                        match.effectPositions.add(convertedLocation);
+                    }
                 }
             }
         }
@@ -126,4 +135,5 @@ public class EntityHiderListener extends PacketAdapter implements Listener {
             }
         }
     }
+
 }
