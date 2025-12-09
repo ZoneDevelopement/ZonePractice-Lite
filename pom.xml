@@ -79,7 +79,7 @@
             <url>https://repo.hpfxd.com/releases/</url>
         </repository>
 
-        <!-- PE repository -->
+        <!-- PacketEvents repository -->
         <repository>
             <id>codemc-releases</id>
             <url>https://repo.codemc.io/repository/maven-releases/</url>
@@ -97,13 +97,6 @@
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>com.github.retrooper</groupId>
-            <artifactId>packetevents-spigot</artifactId>
-            <version>2.10.1</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Panda depend -->
         <dependency>
             <groupId>com.hpfxd.pandaspigot</groupId>
@@ -125,6 +118,14 @@
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>
             <version>2.11.6</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PacketEvents depend -->
+        <dependency>
+            <groupId>com.github.retrooper</groupId>
+            <artifactId>packetevents-spigot</artifactId>
+            <version>2.10.1</version>
             <scope>provided</scope>
         </dependency>
 
