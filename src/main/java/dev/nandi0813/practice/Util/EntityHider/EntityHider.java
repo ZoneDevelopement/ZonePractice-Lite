@@ -1,16 +1,10 @@
 package dev.nandi0813.practice.Util.EntityHider;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Vector;
-
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.*;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
@@ -199,86 +193,48 @@ public class EntityHider implements Listener {
     private PacketListener constructProtocol = new PacketListener() {
         @Override
         public void onPacketSend(PacketSendEvent event) {
-            int entityID = -1;
+            int entityID = switch (event.getPacketType()) {
+                case PacketType.Play.Server.ENTITY_EQUIPMENT ->
+                        new WrapperPlayServerEntityEquipment(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_HEAD_LOOK ->
+                        new WrapperPlayServerEntityHeadLook(event).getEntityId();
+                case PacketType.Play.Server.SPAWN_ENTITY ->
+                        new WrapperPlayServerSpawnEntity(event).getEntityId();
+                case PacketType.Play.Server.COLLECT_ITEM ->
+                        new WrapperPlayServerCollectItem(event).getCollectedEntityId();
+                case PacketType.Play.Server.SPAWN_PAINTING ->
+                        new WrapperPlayServerSpawnPainting(event).getEntityId();
+                case PacketType.Play.Server.SPAWN_EXPERIENCE_ORB ->
+                        new WrapperPlayServerSpawnExperienceOrb(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_VELOCITY ->
+                        new WrapperPlayServerEntityVelocity(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_TELEPORT ->
+                        new WrapperPlayServerEntityTeleport(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_ROTATION ->
+                        new WrapperPlayServerEntityRotation(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_RELATIVE_MOVE_AND_ROTATION ->
+                        new WrapperPlayServerEntityRelativeMoveAndRotation(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_RELATIVE_MOVE ->
+                        new WrapperPlayServerEntityRelativeMove(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_STATUS ->
+                        new WrapperPlayServerEntityStatus(event).getEntityId();
+                case PacketType.Play.Server.ATTACH_ENTITY ->
+                        new WrapperPlayServerAttachEntity(event).getAttachedId();
+                case PacketType.Play.Server.ENTITY_SOUND_EFFECT ->
+                        new WrapperPlayServerEntitySoundEffect(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_METADATA ->
+                        new WrapperPlayServerEntityMetadata(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_EFFECT ->
+                        new WrapperPlayServerEntityEffect(event).getEntityId();
+                case PacketType.Play.Server.REMOVE_ENTITY_EFFECT ->
+                        new WrapperPlayServerRemoveEntityEffect(event).getEntityId();
+                case PacketType.Play.Server.BLOCK_BREAK_ANIMATION ->
+                        new WrapperPlayServerBlockBreakAnimation(event).getEntityId();
+                case PacketType.Play.Server.ENTITY_ANIMATION ->
+                        new WrapperPlayServerEntityAnimation(event).getEntityId();
+                default -> -1;
+            };
 
-            if (event.getPacketType() == PacketType.Play.Server.ENTITY_EQUIPMENT) {
-                WrapperPlayServerEntityEquipment wrapper = new WrapperPlayServerEntityEquipment(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_HEAD_LOOK) {
-                WrapperPlayServerEntityHeadLook wrapper = new WrapperPlayServerEntityHeadLook(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY) {
-                WrapperPlayServerSpawnEntity wrapper = new WrapperPlayServerSpawnEntity(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.COLLECT_ITEM) {
-                WrapperPlayServerCollectItem wrapper = new WrapperPlayServerCollectItem(event);
-                entityID = wrapper.getCollectedEntityId(); // This one is different - might want collectorEntityId instead?
-
-            } else if (event.getPacketType() == PacketType.Play.Server.SPAWN_PAINTING) {
-                WrapperPlayServerSpawnPainting wrapper = new WrapperPlayServerSpawnPainting(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.SPAWN_EXPERIENCE_ORB) {
-                WrapperPlayServerSpawnExperienceOrb wrapper = new WrapperPlayServerSpawnExperienceOrb(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_VELOCITY) {
-                WrapperPlayServerEntityVelocity wrapper = new WrapperPlayServerEntityVelocity(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_TELEPORT) {
-                WrapperPlayServerEntityTeleport wrapper = new WrapperPlayServerEntityTeleport(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_ROTATION) {
-                WrapperPlayServerEntityRotation wrapper = new WrapperPlayServerEntityRotation(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_RELATIVE_MOVE_AND_ROTATION) {
-                WrapperPlayServerEntityRelativeMoveAndRotation wrapper = new WrapperPlayServerEntityRelativeMoveAndRotation(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_RELATIVE_MOVE) {
-                WrapperPlayServerEntityRelativeMove wrapper = new WrapperPlayServerEntityRelativeMove(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_STATUS) {
-                WrapperPlayServerEntityStatus wrapper = new WrapperPlayServerEntityStatus(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ATTACH_ENTITY) {
-                WrapperPlayServerAttachEntity wrapper = new WrapperPlayServerAttachEntity(event);
-                entityID = wrapper.getAttachedId();
-
-            } if (event.getPacketType() == PacketType.Play.Server.ENTITY_SOUND_EFFECT) {
-                WrapperPlayServerEntitySoundEffect wrapper = new WrapperPlayServerEntitySoundEffect(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_METADATA) {
-                WrapperPlayServerEntityMetadata wrapper = new WrapperPlayServerEntityMetadata(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_EFFECT) {
-                WrapperPlayServerEntityEffect wrapper = new WrapperPlayServerEntityEffect(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.REMOVE_ENTITY_EFFECT) {
-                WrapperPlayServerRemoveEntityEffect wrapper = new WrapperPlayServerRemoveEntityEffect(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.BLOCK_BREAK_ANIMATION) {
-                WrapperPlayServerBlockBreakAnimation wrapper = new WrapperPlayServerBlockBreakAnimation(event);
-                entityID = wrapper.getEntityId();
-
-            } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_ANIMATION) {
-                WrapperPlayServerEntityAnimation wrapper = new WrapperPlayServerEntityAnimation(event);
-                entityID = wrapper.getEntityId();
-            }
-
-            // Check visibility and cancel if needed
             if (entityID != -1 && !isVisible(event.getPlayer(), entityID)) {
                 event.setCancelled(true);
             }
