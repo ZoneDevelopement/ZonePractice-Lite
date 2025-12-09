@@ -51,9 +51,7 @@ public class EntityHiderListener implements PacketListener, Listener {
 
             if (match != null && match.effectPositions.contains(position)) {
                 match.effectPositions.remove(position);
-                Bukkit.broadcastMessage("Passed: " + event.getUser().getName());
             } else {
-                Bukkit.broadcastMessage("Cancelled: " + event.getUser().getName());
                 event.setCancelled(true);
             }
         }
@@ -75,8 +73,6 @@ public class EntityHiderListener implements PacketListener, Listener {
                 nearestPlayer = somePlayer;
             }
         }
-
-        Bukkit.broadcastMessage("nearest: " + (nearestPlayer == null ? "null" : nearestPlayer.getName()) + " d: " + nearestDistance);
 
         return nearestPlayer != null && !player.canSee(nearestPlayer);
     }
