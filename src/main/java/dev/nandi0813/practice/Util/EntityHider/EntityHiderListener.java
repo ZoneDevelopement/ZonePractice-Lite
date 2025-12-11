@@ -71,6 +71,7 @@ public class EntityHiderListener implements PacketListener, Listener {
         );
 
         for (Player somePlayer : Bukkit.getOnlinePlayers()) {
+            if (soundLocation.getWorld() != somePlayer.getWorld()) continue;
             double distance = somePlayer.getLocation().distance(soundLocation);
             if (distance < nearestDistance) {
                 nearestDistance = distance;
