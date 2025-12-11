@@ -1,6 +1,8 @@
 package dev.nandi0813.practice;
 
-import com.comphenix.protocol.ProtocolLibrary;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketEvent;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import dev.nandi0813.practice.Command.Arena.ArenaCommand;
 import dev.nandi0813.practice.Command.Arena.ArenaTabCompleter;
 import dev.nandi0813.practice.Command.Ladder.LadderCommand;
@@ -38,6 +40,9 @@ import dev.nandi0813.practice.Util.UpdateChecker;
 import lombok.Getter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -112,26 +117,49 @@ public final class Practice extends JavaPlugin {
     }
 
     public static void registerCommands() {
-        Bukkit.getServer().getPluginCommand("arena").setExecutor(new ArenaCommand());
-        Bukkit.getServer().getPluginCommand("arena").setTabCompleter(new ArenaTabCompleter());
+        PluginCommand arenaCommand = Bukkit.getServer().getPluginCommand("arena");
+        CommandExecutor arenaExecutor = new ArenaCommand();
+        TabCompleter arenaTabCompleter = new ArenaTabCompleter();
+        arenaCommand.setExecutor(arenaExecutor);
+        arenaCommand.setTabCompleter(arenaTabCompleter);
 
-        Bukkit.getServer().getPluginCommand("ladder").setExecutor(new LadderCommand());
-        Bukkit.getServer().getPluginCommand("ladder").setTabCompleter(new LadderTabCompleter());
+        PluginCommand ladderCommand = Bukkit.getServer().getPluginCommand("ladder");
+        CommandExecutor ladderExecutor = new LadderCommand();
+        TabCompleter ladderTabCompleter = new LadderTabCompleter();
+        ladderCommand.setExecutor(ladderExecutor);
+        ladderCommand.setTabCompleter(ladderTabCompleter);
 
-        Bukkit.getServer().getPluginCommand("practice").setExecutor(new PracticeCommand());
-        Bukkit.getServer().getPluginCommand("practice").setTabCompleter(new PracticeTabCompleter());
+        PluginCommand practiceCommand = Bukkit.getServer().getPluginCommand("practice");
+        CommandExecutor practiceExecutor = new PracticeCommand();
+        TabCompleter practiceTabCompleter = new PracticeTabCompleter();
+        practiceCommand.setExecutor(practiceExecutor);
+        practiceCommand.setTabCompleter(practiceTabCompleter);
 
-        Bukkit.getServer().getPluginCommand("spectate").setExecutor(new SpectateCommand());
-        Bukkit.getServer().getPluginCommand("spectate").setTabCompleter(new SpectateTabCompleter());
+        PluginCommand spectateCommand = Bukkit.getServer().getPluginCommand("spectate");
+        CommandExecutor spectateExecutor = new SpectateCommand();
+        TabCompleter spectateTabCompleter = new SpectateTabCompleter();
+        spectateCommand.setExecutor(spectateExecutor);
+        spectateCommand.setTabCompleter(spectateTabCompleter);
 
-        Bukkit.getServer().getPluginCommand("party").setExecutor(new PartyCommand());
-        Bukkit.getServer().getPluginCommand("party").setTabCompleter(new PartyTabCompleter());
+        PluginCommand partyCommand = Bukkit.getServer().getPluginCommand("party");
+        CommandExecutor partyExecutor = new PartyCommand();
+        TabCompleter partyTabCompleter = new PartyTabCompleter();
+        partyCommand.setExecutor(partyExecutor);
+        partyCommand.setTabCompleter(partyTabCompleter);
 
-        Bukkit.getServer().getPluginCommand("leaderboard").setExecutor(new LeaderboardCommand());
-        Bukkit.getServer().getPluginCommand("leaderboard").setTabCompleter(new LeaderboardTabCompleter());
+        PluginCommand leaderboardCommand = Bukkit.getServer().getPluginCommand("leaderboard");
+        CommandExecutor leaderboardExecutor = new LeaderboardCommand();
+        TabCompleter leaderboardTabCompleter = new LeaderboardTabCompleter();
+        leaderboardCommand.setExecutor(leaderboardExecutor);
+        leaderboardCommand.setTabCompleter(leaderboardTabCompleter);
 
-        Bukkit.getServer().getPluginCommand("matchinv").setExecutor(new MatchinvCommand());
-        Bukkit.getServer().getPluginCommand("statistics").setExecutor(new StatsCommand());
+        PluginCommand matchinvCommand = Bukkit.getServer().getPluginCommand("matchinv");
+        CommandExecutor matchinvExecutor = new MatchinvCommand();
+        matchinvCommand.setExecutor(matchinvExecutor);
+
+        PluginCommand statisticsCommand = Bukkit.getServer().getPluginCommand("statistics");
+        CommandExecutor statsExecutor = new StatsCommand();
+        statisticsCommand.setExecutor(statsExecutor);
     }
 
     public static void registerListeners(Practice practice, PluginManager pm) {
@@ -149,11 +177,8 @@ public final class Practice extends JavaPlugin {
     }
 
     public static void registerPacketListener() {
-        try {
-            ProtocolLibrary.getProtocolManager().addPacketListener(new EntityHiderListener());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        PacketEvents.getAPI().getEventManager().registerListener(
+                new EntityHiderListener(), PacketListenerPriority.NORMAL);
     }
 
     @Override
