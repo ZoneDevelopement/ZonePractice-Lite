@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import lombok.Getter;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -47,7 +48,14 @@ public class EntityHider implements Listener {
     private final Listener bukkitListener;
     private final PacketListenerCommon peListener;
 
+    /**
+     * -- GETTER --
+     *  Retrieve the current visibility policy.
+     *
+     * @return The current visibility policy.
+     */
     // Current policy
+    @Getter
     protected final Policy policy;
 
     /**
@@ -190,7 +198,7 @@ public class EntityHider implements Listener {
      * @param plugin - the parent plugin.
      * @return The packet listener.
      */
-    private PacketListener constructProtocol = new PacketListener() {
+    private final PacketListener constructProtocol = new PacketListener() {
         @Override
         public void onPacketSend(PacketSendEvent event) {
             if (!(event.getPacketType() instanceof PacketType.Play.Server serverType)) {
@@ -316,15 +324,6 @@ public class EntityHider implements Listener {
     private void validate(Player observer, Entity entity) {
         Preconditions.checkNotNull(observer, "observer cannot be NULL.");
         Preconditions.checkNotNull(entity, "entity cannot be NULL.");
-    }
-
-    /**
-     * Retrieve the current visibility policy.
-     *
-     * @return The current visibility policy.
-     */
-    public Policy getPolicy() {
-        return policy;
     }
 
     public void close() {
