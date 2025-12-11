@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import lombok.Getter;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -47,7 +48,14 @@ public class EntityHider implements Listener {
     private final Listener bukkitListener;
     private final PacketListenerCommon peListener;
 
+    /**
+     * -- GETTER --
+     *  Retrieve the current visibility policy.
+     *
+     * @return The current visibility policy.
+     */
     // Current policy
+    @Getter
     protected final Policy policy;
 
     /**
@@ -190,48 +198,34 @@ public class EntityHider implements Listener {
      * @param plugin - the parent plugin.
      * @return The packet listener.
      */
-    private PacketListener constructProtocol = new PacketListener() {
+    private final PacketListener constructProtocol = new PacketListener() {
         @Override
         public void onPacketSend(PacketSendEvent event) {
-            int entityID = switch (event.getPacketType()) {
-                case PacketType.Play.Server.ENTITY_EQUIPMENT ->
-                        new WrapperPlayServerEntityEquipment(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_HEAD_LOOK ->
-                        new WrapperPlayServerEntityHeadLook(event).getEntityId();
-                case PacketType.Play.Server.SPAWN_ENTITY ->
-                        new WrapperPlayServerSpawnEntity(event).getEntityId();
-                case PacketType.Play.Server.COLLECT_ITEM ->
-                        new WrapperPlayServerCollectItem(event).getCollectedEntityId();
-                case PacketType.Play.Server.SPAWN_PAINTING ->
-                        new WrapperPlayServerSpawnPainting(event).getEntityId();
-                case PacketType.Play.Server.SPAWN_EXPERIENCE_ORB ->
-                        new WrapperPlayServerSpawnExperienceOrb(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_VELOCITY ->
-                        new WrapperPlayServerEntityVelocity(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_TELEPORT ->
-                        new WrapperPlayServerEntityTeleport(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_ROTATION ->
-                        new WrapperPlayServerEntityRotation(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_RELATIVE_MOVE_AND_ROTATION ->
+            if (!(event.getPacketType() instanceof PacketType.Play.Server serverType)) {
+                return;
+            }
+
+            int entityID = switch (serverType) {
+                case ENTITY_EQUIPMENT -> new WrapperPlayServerEntityEquipment(event).getEntityId();
+                case ENTITY_HEAD_LOOK -> new WrapperPlayServerEntityHeadLook(event).getEntityId();
+                case SPAWN_ENTITY -> new WrapperPlayServerSpawnEntity(event).getEntityId();
+                case COLLECT_ITEM -> new WrapperPlayServerCollectItem(event).getCollectedEntityId();
+                case SPAWN_PAINTING -> new WrapperPlayServerSpawnPainting(event).getEntityId();
+                case SPAWN_EXPERIENCE_ORB -> new WrapperPlayServerSpawnExperienceOrb(event).getEntityId();
+                case ENTITY_VELOCITY -> new WrapperPlayServerEntityVelocity(event).getEntityId();
+                case ENTITY_TELEPORT -> new WrapperPlayServerEntityTeleport(event).getEntityId();
+                case ENTITY_ROTATION -> new WrapperPlayServerEntityRotation(event).getEntityId();
+                case ENTITY_RELATIVE_MOVE_AND_ROTATION ->
                         new WrapperPlayServerEntityRelativeMoveAndRotation(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_RELATIVE_MOVE ->
-                        new WrapperPlayServerEntityRelativeMove(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_STATUS ->
-                        new WrapperPlayServerEntityStatus(event).getEntityId();
-                case PacketType.Play.Server.ATTACH_ENTITY ->
-                        new WrapperPlayServerAttachEntity(event).getAttachedId();
-                case PacketType.Play.Server.ENTITY_SOUND_EFFECT ->
-                        new WrapperPlayServerEntitySoundEffect(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_METADATA ->
-                        new WrapperPlayServerEntityMetadata(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_EFFECT ->
-                        new WrapperPlayServerEntityEffect(event).getEntityId();
-                case PacketType.Play.Server.REMOVE_ENTITY_EFFECT ->
-                        new WrapperPlayServerRemoveEntityEffect(event).getEntityId();
-                case PacketType.Play.Server.BLOCK_BREAK_ANIMATION ->
-                        new WrapperPlayServerBlockBreakAnimation(event).getEntityId();
-                case PacketType.Play.Server.ENTITY_ANIMATION ->
-                        new WrapperPlayServerEntityAnimation(event).getEntityId();
+                case ENTITY_RELATIVE_MOVE -> new WrapperPlayServerEntityRelativeMove(event).getEntityId();
+                case ENTITY_STATUS -> new WrapperPlayServerEntityStatus(event).getEntityId();
+                case ATTACH_ENTITY -> new WrapperPlayServerAttachEntity(event).getAttachedId();
+                case ENTITY_SOUND_EFFECT -> new WrapperPlayServerEntitySoundEffect(event).getEntityId();
+                case ENTITY_METADATA -> new WrapperPlayServerEntityMetadata(event).getEntityId();
+                case ENTITY_EFFECT -> new WrapperPlayServerEntityEffect(event).getEntityId();
+                case REMOVE_ENTITY_EFFECT -> new WrapperPlayServerRemoveEntityEffect(event).getEntityId();
+                case BLOCK_BREAK_ANIMATION -> new WrapperPlayServerBlockBreakAnimation(event).getEntityId();
+                case ENTITY_ANIMATION -> new WrapperPlayServerEntityAnimation(event).getEntityId();
                 default -> -1;
             };
 
@@ -330,15 +324,6 @@ public class EntityHider implements Listener {
     private void validate(Player observer, Entity entity) {
         Preconditions.checkNotNull(observer, "observer cannot be NULL.");
         Preconditions.checkNotNull(entity, "entity cannot be NULL.");
-    }
-
-    /**
-     * Retrieve the current visibility policy.
-     *
-     * @return The current visibility policy.
-     */
-    public Policy getPolicy() {
-        return policy;
     }
 
     public void close() {

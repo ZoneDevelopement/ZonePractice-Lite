@@ -1,21 +1,15 @@
 package dev.nandi0813.practice.Util.EntityHider;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEffect;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntitySoundEffect;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
 import dev.nandi0813.practice.Manager.Match.Match;
 import dev.nandi0813.practice.Manager.Profile.Profile;
 import dev.nandi0813.practice.Manager.Profile.ProfileStatus;
 import dev.nandi0813.practice.Practice;
-import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
@@ -31,29 +25,37 @@ public class EntityHiderListener implements PacketListener, Listener {
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() == PacketType.Play.Server.SOUND_EFFECT ||
-                event.getPacketType() == PacketType.Play.Server.NAMED_SOUND_EFFECT) {
-            WrapperPlayServerSoundEffect wrapper = new WrapperPlayServerSoundEffect(event);
-
-            Player player = event.getPlayer();
-            Vector3i position = wrapper.getEffectPosition();
-
-            if (shouldCancelSound(player, position)) {
-                event.setCancelled(true);
-            }
+        if (event.getPacketType() == PacketType.Play.Server.SOUND_EFFECT
+                || event.getPacketType() == PacketType.Play.Server.NAMED_SOUND_EFFECT) {
+            handleSoundPacket(event);
+            return;
         }
 
         if (event.getPacketType() == PacketType.Play.Server.EFFECT) {
-            WrapperPlayServerEffect wrapper = new WrapperPlayServerEffect(event);
-            Player player = event.getPlayer();
-            Vector3i position = wrapper.getPosition();
-            Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
+            handleEffectPacket(event);
+        }
+    }
 
-            if (match != null && match.effectPositions.contains(position)) {
-                match.effectPositions.remove(position);
-            } else {
-                event.setCancelled(true);
-            }
+    private void handleSoundPacket(PacketSendEvent event) {
+        WrapperPlayServerSoundEffect wrapper = new WrapperPlayServerSoundEffect(event);
+        Player player = event.getPlayer();
+        Vector3i position = wrapper.getEffectPosition();
+
+        if (shouldCancelSound(player, position)) {
+            event.setCancelled(true);
+        }
+    }
+
+    private void handleEffectPacket(PacketSendEvent event) {
+        WrapperPlayServerEffect wrapper = new WrapperPlayServerEffect(event);
+        Player player = event.getPlayer();
+        Vector3i position = wrapper.getPosition();
+        Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
+
+        if (match != null && match.effectPositions.contains(position)) {
+            match.effectPositions.remove(position);
+        } else {
+            event.setCancelled(true);
         }
     }
 
@@ -61,16 +63,19 @@ public class EntityHiderListener implements PacketListener, Listener {
         Player nearestPlayer = null;
         double nearestDistance = 5.0;
 
-        for (Player somePlayer : Bukkit.getOnlinePlayers()) {
-            double distance = somePlayer.getLocation().distance(
-                    new Location(somePlayer.getWorld(),
-                            position.x / 8.,
-                            position.y / 8.,
-                            position.z / 8.));
+        Location soundLocation = new Location(
+                player.getWorld(),
+                position.x / 8.0,
+                position.y / 8.0,
+                position.z / 8.0
+        );
 
+        for (Player nearbyPlayer : Bukkit.getOnlinePlayers()) {
+            if (soundLocation.getWorld() != nearbyPlayer.getWorld()) continue;
+            double distance = nearbyPlayer.getLocation().distance(soundLocation);
             if (distance < nearestDistance) {
                 nearestDistance = distance;
-                nearestPlayer = somePlayer;
+                nearestPlayer = nearbyPlayer;
             }
         }
 
@@ -78,58 +83,79 @@ public class EntityHiderListener implements PacketListener, Listener {
     }
 
     @EventHandler
-    public void onProjectileHit(ProjectileHitEvent e) {
-        Projectile projectile = e.getEntity();
-        if (projectile instanceof ThrownPotion) {
-            ThrownPotion potion = (ThrownPotion) projectile;
-            if (projectile.getShooter() instanceof Player) {
-                Player player = (Player) projectile.getShooter();
-                Profile profile = Practice.getProfileManager().getProfiles().get(player);
-                Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
-
-                if (profile.getStatus().equals(ProfileStatus.MATCH) && match != null && !match.getLadder().isBuild()) {
-                    Location location = projectile.getLocation();
-                    Vector3i convertedLocation = new Vector3i(location.getBlockX(),
-                            location.getBlockY(),
-                            location.getBlockZ());
-
-                    WrapperPlayServerEffect packet = new WrapperPlayServerEffect(
-                            2002, // Effect ID (potion break)
-                            convertedLocation, // Position
-                            potion.getItem().getDurability(), // Effect data (potion color)
-                            false // Disable relative volume
-                    );
-
-                    for (Player matchPlayer : match.getPlayers()) {
-                        match.effectPositions.add(convertedLocation);
-                    }
-                }
-            }
+    public void onProjectileHit(ProjectileHitEvent event) {
+        Projectile projectile = event.getEntity();
+        if (!(projectile instanceof ThrownPotion thrownPotion)) {
+            return;
         }
+
+        if (!(projectile.getShooter() instanceof Player player)) {
+            return;
+        }
+
+        Profile profile = Practice.getProfileManager().getProfiles().get(player);
+        Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
+
+        if (profile == null
+                || !profile.getStatus().equals(ProfileStatus.MATCH)
+                || match == null
+                || match.getLadder().isBuild()) {
+            return;
+        }
+
+        Vector3i convertedLocation = toBlockVector(projectile.getLocation());
+
+        @SuppressWarnings("unused")
+        WrapperPlayServerEffect packet = new WrapperPlayServerEffect(
+                2002, // Effect ID (potion break)
+                convertedLocation,
+                thrownPotion.getItem().getDurability(),
+                false
+        );
+
+        match.effectPositions.add(convertedLocation);
+    }
+
+    private Vector3i toBlockVector(Location location) {
+        return new Vector3i(
+                location.getBlockX(),
+                location.getBlockY(),
+                location.getBlockZ()
+        );
     }
 
     @EventHandler
-    public void onPotionSplash(PotionSplashEvent e) {
-        if (e.getEntity().getShooter() instanceof Player) {
-            Player player = (Player) e.getEntity().getShooter();
-            Profile profile = Practice.getProfileManager().getProfiles().get(player);
-            Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
+    public void onPotionSplash(PotionSplashEvent event) {
+        if (!(event.getEntity().getShooter() instanceof Player player)) {
+            return;
+        }
 
-            if (profile.getStatus().equals(ProfileStatus.MATCH) && match != null && !match.getLadder().isBuild()) {
-                for (Player online : Bukkit.getServer().getOnlinePlayers()) {
-                    if (match.getPlayers().contains(online) || match.getSpectators().contains(online))
-                        continue;
+        Profile profile = Practice.getProfileManager().getProfiles().get(player);
+        Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
 
-                    e.getAffectedEntities().removeIf(entity -> !match.getPlayers().contains(Bukkit.getPlayer(entity.getName())));
+        if (profile == null
+                || !profile.getStatus().equals(ProfileStatus.MATCH)
+                || match == null
+                || match.getLadder().isBuild()) {
+            return;
+        }
 
-                    e.setCancelled(true);
-                    for (LivingEntity entity : e.getAffectedEntities()) {
-                        if (match.getPlayers().contains(Bukkit.getPlayer(entity.getName())))
-                            entity.addPotionEffects(e.getEntity().getEffects());
-                    }
+        for (Player online : Bukkit.getServer().getOnlinePlayers()) {
+            if (match.getPlayers().contains(online) || match.getSpectators().contains(online)) {
+                continue;
+            }
+
+            event.getAffectedEntities().removeIf(
+                    entity -> !match.getPlayers().contains(Bukkit.getPlayer(entity.getName()))
+            );
+
+            event.setCancelled(true);
+            for (LivingEntity entity : event.getAffectedEntities()) {
+                Player target = Bukkit.getPlayer(entity.getName());
+                if (match.getPlayers().contains(target)) {
+                    entity.addPotionEffects(event.getEntity().getEffects());
                 }
             }
         }
     }
-
 }
