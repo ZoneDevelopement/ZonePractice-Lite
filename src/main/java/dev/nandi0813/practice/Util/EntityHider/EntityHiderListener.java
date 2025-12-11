@@ -104,8 +104,6 @@ public class EntityHiderListener implements PacketListener, Listener {
 
         Vector3i convertedLocation = toBlockVector(projectile.getLocation());
 
-        // Keep constructing the packet (if you intend to send it later),
-        // but suppress the unused warning if truly unused:
         @SuppressWarnings("unused")
         WrapperPlayServerEffect packet = new WrapperPlayServerEffect(
                 2002, // Effect ID (potion break)
@@ -114,7 +112,6 @@ public class EntityHiderListener implements PacketListener, Listener {
                 false
         );
 
-        // Just add once; the original loop never used 'matchPlayer'
         match.effectPositions.add(convertedLocation);
     }
 
