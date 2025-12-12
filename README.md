@@ -34,7 +34,7 @@ practice environment.
 ## Dependencies
 
 - **Paper Spigot 1.8.8:** Ensure your server is running PaperSpigot 1.8.8.
-- **ProtocolLib:** Required for certain functionalities. Download and place it in the `plugins` folder.
+- **PacketEvents:** Required for certain functionalities. Download and place it in the `plugins` folder.
 - **PlaceholderAPI:** Optional but recommended for advanced placeholder support.
 
 ## Configuration
