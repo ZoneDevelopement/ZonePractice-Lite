@@ -7,6 +7,7 @@ import dev.nandi0813.practice.Manager.Match.Enum.MatchStatus;
 import dev.nandi0813.practice.Manager.Match.Enum.MatchType;
 import dev.nandi0813.practice.Manager.Match.Enum.TeamEnum;
 import dev.nandi0813.practice.Manager.Match.Match;
+import dev.nandi0813.practice.Manager.Match.MatchType.Duel.Duel;
 import dev.nandi0813.practice.Manager.Match.Util.TeamUtil;
 import dev.nandi0813.practice.Manager.Profile.ProfileStatus;
 import dev.nandi0813.practice.Manager.Profile.Profile;
@@ -18,6 +19,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -26,6 +28,20 @@ import java.util.Collections;
 import java.util.List;
 
 public class PartySplitListener implements Listener {
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+
+        Profile profile = Practice.getProfileManager().getProfiles().get(player);
+        Match match = Practice.getMatchManager().getLiveMatchByPlayer(player);
+
+        if (profile.getStatus().equals(ProfileStatus.MATCH)
+                && match.getType().equals(MatchType.PARTY_SPLIT)
+                && match.getStatus().equals(MatchStatus.LIVE)) {
+            Duel.killPlayer(match, player, true);
+        }
+    }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerDamage(EntityDamageEvent e) {
