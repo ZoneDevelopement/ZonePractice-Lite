@@ -79,16 +79,6 @@
             <url>https://repo.hpfxd.com/releases/</url>
         </repository>
 
-        <!-- PacketEvents repository -->
-        <repository>
-            <id>codemc-releases</id>
-            <url>https://repo.codemc.io/repository/maven-releases/</url>
-        </repository>
-        <repository>
-            <id>codemc-snapshots</id>
-            <url>https://repo.codemc.io/repository/maven-snapshots/</url>
-        </repository>
-
         <!-- PAPI repository -->
         <repository>
             <id>placeholderapi</id>
@@ -113,11 +103,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- PacketEvents depend -->
+        <!-- ProtocolLib depend -->
         <dependency>
-            <groupId>com.github.retrooper</groupId>
-            <artifactId>packetevents-spigot</artifactId>
-            <version>2.10.1</version>
+            <groupId>net.dmulloy2</groupId>
+            <artifactId>ProtocolLib</artifactId>
+            <version>5.4.0</version>
             <scope>provided</scope>
         </dependency>
 

@@ -1,6 +1,5 @@
 package dev.nandi0813.practice.Manager.Match;
 
-import com.github.retrooper.packetevents.util.Vector3i;
 import dev.nandi0813.practice.Event.MatchEndEvent;
 import dev.nandi0813.practice.Event.MatchStartEvent;
 import dev.nandi0813.practice.Manager.Arena.Arena;
@@ -72,8 +71,6 @@ public class Match {
     private HashSet<Item> droppedItems = new HashSet<>();
     @Getter
     private final HashMap<OfflinePlayer, PlayerMatchStat> matchStats = new HashMap<>();
-
-    public List<Vector3i> effectPositions = new ArrayList<>();
 
     @Getter
     @Setter

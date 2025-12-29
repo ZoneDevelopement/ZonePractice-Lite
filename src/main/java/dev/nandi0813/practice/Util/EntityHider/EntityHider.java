@@ -1,14 +1,9 @@
 package dev.nandi0813.practice.Util.EntityHider;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Map;
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.*;
-import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
-import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.util.Vector3d;
-import com.github.retrooper.packetevents.wrapper.play.server.*;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import lombok.Getter;
+
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,12 +14,33 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 public class EntityHider implements Listener {
     protected Table<Integer, Integer, Boolean> observerEntityMap = HashBasedTable.create();
+
+    // Packets that update remote player entities
+    private static final PacketType[] ENTITY_PACKETS = {PacketType.Play.Server.ENTITY_EQUIPMENT,
+            PacketType.Play.Server.ENTITY_LOOK, PacketType.Play.Server.NAMED_ENTITY_SPAWN,
+            PacketType.Play.Server.COLLECT, PacketType.Play.Server.SPAWN_ENTITY,
+            PacketType.Play.Server.SPAWN_ENTITY_PAINTING, PacketType.Play.Server.SPAWN_ENTITY_EXPERIENCE_ORB,
+            PacketType.Play.Server.EXPERIENCE, PacketType.Play.Server.ENTITY_VELOCITY,
+            PacketType.Play.Server.ENTITY_TELEPORT, PacketType.Play.Server.ENTITY_HEAD_ROTATION,
+            PacketType.Play.Server.REL_ENTITY_MOVE_LOOK, PacketType.Play.Server.REL_ENTITY_MOVE,
+            PacketType.Play.Server.ENTITY_STATUS, PacketType.Play.Server.ATTACH_ENTITY,
+            PacketType.Play.Server.ENTITY_METADATA, PacketType.Play.Server.ENTITY_EFFECT,
+            PacketType.Play.Server.REMOVE_ENTITY_EFFECT, PacketType.Play.Server.BLOCK_BREAK_ANIMATION,
+            PacketType.Play.Server.ANIMATION
+            // We don't handle DESTROY_ENTITY though
+    };
 
     /**
      * The current entity visibility policy.
@@ -44,18 +60,13 @@ public class EntityHider implements Listener {
         BLACKLIST,
     }
 
+    private ProtocolManager manager;
+
     // Listeners
     private final Listener bukkitListener;
-    private final PacketListenerCommon peListener;
+    private final PacketAdapter protocolListener;
 
-    /**
-     * -- GETTER --
-     *  Retrieve the current visibility policy.
-     *
-     * @return The current visibility policy.
-     */
     // Current policy
-    @Getter
     protected final Policy policy;
 
     /**
@@ -69,10 +80,11 @@ public class EntityHider implements Listener {
 
         // Save policy
         this.policy = policy;
+        this.manager = ProtocolLibrary.getProtocolManager();
 
         // Register events and packet listener
         plugin.getServer().getPluginManager().registerEvents(bukkitListener = constructBukkit(), plugin);
-        peListener = PacketEvents.getAPI().getEventManager().registerListener(constructProtocol, PacketListenerPriority.NORMAL);
+        manager.addPacketListener(protocolListener = constructProtocol(plugin));
     }
 
     /**
@@ -198,42 +210,19 @@ public class EntityHider implements Listener {
      * @param plugin - the parent plugin.
      * @return The packet listener.
      */
-    private final PacketListener constructProtocol = new PacketListener() {
-        @Override
-        public void onPacketSend(PacketSendEvent event) {
-            if (!(event.getPacketType() instanceof PacketType.Play.Server serverType)) {
-                return;
-            }
+    private PacketAdapter constructProtocol(Plugin plugin) {
+        return new PacketAdapter(plugin, ENTITY_PACKETS) {
+            @Override
+            public void onPacketSending(PacketEvent event) {
+                int entityID = event.getPacket().getIntegers().read(0);
 
-            int entityID = switch (serverType) {
-                case ENTITY_EQUIPMENT -> new WrapperPlayServerEntityEquipment(event).getEntityId();
-                case ENTITY_HEAD_LOOK -> new WrapperPlayServerEntityHeadLook(event).getEntityId();
-                case SPAWN_ENTITY -> new WrapperPlayServerSpawnEntity(event).getEntityId();
-                case COLLECT_ITEM -> new WrapperPlayServerCollectItem(event).getCollectedEntityId();
-                case SPAWN_PAINTING -> new WrapperPlayServerSpawnPainting(event).getEntityId();
-                case SPAWN_EXPERIENCE_ORB -> new WrapperPlayServerSpawnExperienceOrb(event).getEntityId();
-                case ENTITY_VELOCITY -> new WrapperPlayServerEntityVelocity(event).getEntityId();
-                case ENTITY_TELEPORT -> new WrapperPlayServerEntityTeleport(event).getEntityId();
-                case ENTITY_ROTATION -> new WrapperPlayServerEntityRotation(event).getEntityId();
-                case ENTITY_RELATIVE_MOVE_AND_ROTATION ->
-                        new WrapperPlayServerEntityRelativeMoveAndRotation(event).getEntityId();
-                case ENTITY_RELATIVE_MOVE -> new WrapperPlayServerEntityRelativeMove(event).getEntityId();
-                case ENTITY_STATUS -> new WrapperPlayServerEntityStatus(event).getEntityId();
-                case ATTACH_ENTITY -> new WrapperPlayServerAttachEntity(event).getAttachedId();
-                case ENTITY_SOUND_EFFECT -> new WrapperPlayServerEntitySoundEffect(event).getEntityId();
-                case ENTITY_METADATA -> new WrapperPlayServerEntityMetadata(event).getEntityId();
-                case ENTITY_EFFECT -> new WrapperPlayServerEntityEffect(event).getEntityId();
-                case REMOVE_ENTITY_EFFECT -> new WrapperPlayServerRemoveEntityEffect(event).getEntityId();
-                case BLOCK_BREAK_ANIMATION -> new WrapperPlayServerBlockBreakAnimation(event).getEntityId();
-                case ENTITY_ANIMATION -> new WrapperPlayServerEntityAnimation(event).getEntityId();
-                default -> -1;
-            };
-
-            if (entityID != -1 && !isVisible(event.getPlayer(), entityID)) {
-                event.setCancelled(true);
+                // See if this packet should be cancelled
+                if (!isVisible(event.getPlayer(), entityID)) {
+                    event.setCancelled(true);
+                }
             }
-        }
-    };
+        };
+    }
 
     /**
      * Toggle the visibility status of an entity for a player.
@@ -265,21 +254,9 @@ public class EntityHider implements Listener {
         boolean hiddenBefore = !setVisibility(observer, entity.getEntityId(), true);
 
         // Resend packets
-        if (hiddenBefore) {
-            // 1. Send spawn packet
-            WrapperPlayServerSpawnEntity spawnPacket = new WrapperPlayServerSpawnEntity(
-                    entity.getEntityId(),
-                    entity.getUniqueId(),
-                    EntityTypes.getById(PacketEvents.getAPI().getPlayerManager().getUser(observer).getClientVersion(),
-                            entity.getType().getTypeId()), // You might need to map this
-                    SpigotConversionUtil.fromBukkitLocation(entity.getLocation()),
-                    entity.getLocation().getYaw(), // Head yaw
-                    0, // Data
-                    new Vector3d() // Velocity
-            );
-            PacketEvents.getAPI().getPlayerManager().sendPacket(observer, spawnPacket);
+        if (manager != null && hiddenBefore) {
+            manager.updateEntity(entity, Arrays.asList(observer));
         }
-
         return hiddenBefore;
     }
 
@@ -295,10 +272,12 @@ public class EntityHider implements Listener {
         boolean visibleBefore = setVisibility(observer, entity.getEntityId(), false);
 
         if (visibleBefore) {
-            WrapperPlayServerDestroyEntities destroyEntity = new WrapperPlayServerDestroyEntities(entity.getEntityId());
-            PacketEvents.getAPI().getPlayerManager().sendPacket(observer, destroyEntity);
-        }
+            PacketContainer destroyEntity = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
+            destroyEntity.getIntegerArrays().write(0, new int[]{entity.getEntityId()});
 
+            // Make the entity disappear
+            manager.sendServerPacket(observer, destroyEntity);
+        }
         return visibleBefore;
     }
 
@@ -326,8 +305,20 @@ public class EntityHider implements Listener {
         Preconditions.checkNotNull(entity, "entity cannot be NULL.");
     }
 
+    /**
+     * Retrieve the current visibility policy.
+     *
+     * @return The current visibility policy.
+     */
+    public Policy getPolicy() {
+        return policy;
+    }
+
     public void close() {
-        HandlerList.unregisterAll(bukkitListener);
-        PacketEvents.getAPI().getEventManager().unregisterListener(peListener);
+        if (manager != null) {
+            HandlerList.unregisterAll(bukkitListener);
+            manager.removePacketListener(protocolListener);
+            manager = null;
+        }
     }
 }
