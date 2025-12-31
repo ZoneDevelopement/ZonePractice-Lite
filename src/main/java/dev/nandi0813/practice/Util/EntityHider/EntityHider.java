@@ -3,6 +3,7 @@ package dev.nandi0813.practice.Util.EntityHider;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -25,7 +26,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 public class EntityHider implements Listener {
-    protected Table<Integer, Integer, Boolean> observerEntityMap = HashBasedTable.create();
+    protected Table<UUID, Integer, Boolean> observerEntityMap = HashBasedTable.create();
 
     // Packets that update remote player entities
     private static final PacketType[] ENTITY_PACKETS = {PacketType.Play.Server.ENTITY_EQUIPMENT,
@@ -119,10 +120,11 @@ public class EntityHider implements Listener {
      */
     // Helper method
     protected boolean setMembership(Player observer, int entityID, boolean member) {
+        UUID key = observer.getUniqueId();
         if (member) {
-            return observerEntityMap.put(observer.getEntityId(), entityID, true) != null;
+            return observerEntityMap.put(key, entityID, true) != null;
         } else {
-            return observerEntityMap.remove(observer.getEntityId(), entityID) != null;
+            return observerEntityMap.remove(key, entityID) != null;
         }
     }
 
@@ -134,7 +136,7 @@ public class EntityHider implements Listener {
      * @return TRUE if they are present, FALSE otherwise.
      */
     protected boolean getMembership(Player observer, int entityID) {
-        return observerEntityMap.contains(observer.getEntityId(), entityID);
+        return observerEntityMap.contains(observer.getUniqueId(), entityID);
     }
 
     /**
@@ -174,7 +176,7 @@ public class EntityHider implements Listener {
      */
     protected void removePlayer(Player player) {
         // Cleanup
-        observerEntityMap.rowMap().remove(player.getEntityId());
+        observerEntityMap.rowMap().remove(player.getUniqueId());
     }
 
     /**
@@ -214,6 +216,8 @@ public class EntityHider implements Listener {
         return new PacketAdapter(plugin, ENTITY_PACKETS) {
             @Override
             public void onPacketSending(PacketEvent event) {
+                if (event.isPlayerTemporary()) return;
+
                 int entityID = event.getPacket().getIntegers().read(0);
 
                 // See if this packet should be cancelled
