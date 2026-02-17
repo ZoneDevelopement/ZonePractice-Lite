@@ -9,9 +9,9 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Profile {
 
@@ -20,7 +20,7 @@ public class Profile {
     @Getter
     private final OfflinePlayer player;
     @Getter
-    private final Map<Ladder, ItemStack[]> customKits = new HashMap<>();
+    private final Map<Ladder, ItemStack[]> customKits = new ConcurrentHashMap<>();
     @Getter
     private final ProfileFile file;
 
@@ -50,16 +50,16 @@ public class Profile {
     @Setter
     private int rankedLosses;
     @Getter
-    private final Map<Ladder, Integer> ladderUnRankedWins = new HashMap<>();
+    private final Map<Ladder, Integer> ladderUnRankedWins = new ConcurrentHashMap<>();
     @Getter
-    private final Map<Ladder, Integer> ladderUnRankedLosses = new HashMap<>();
+    private final Map<Ladder, Integer> ladderUnRankedLosses = new ConcurrentHashMap<>();
     @Getter
-    private final Map<Ladder, Integer> ladderRankedWins = new HashMap<>();
+    private final Map<Ladder, Integer> ladderRankedWins = new ConcurrentHashMap<>();
     @Getter
-    private final Map<Ladder, Integer> ladderRankedLosses = new HashMap<>();
+    private final Map<Ladder, Integer> ladderRankedLosses = new ConcurrentHashMap<>();
     @Getter
     @Setter
-    private Map<Ladder, Integer> elo = new HashMap<>();
+    private Map<Ladder, Integer> elo = new ConcurrentHashMap<>();
 
     public Profile(UUID uuid) {
         this.uuid = uuid;
@@ -74,7 +74,7 @@ public class Profile {
      */
     public void saveData() {
         if (Practice.getInstance().isEnabled())
-            Bukkit.getScheduler().runTask(Practice.getInstance(), file::setProfileData);
+            Bukkit.getScheduler().runTaskAsynchronously(Practice.getInstance(), file::setProfileData);
         else
             file.setProfileData();
     }
