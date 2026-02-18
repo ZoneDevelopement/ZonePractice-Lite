@@ -44,8 +44,11 @@ public class PlayerHider implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerTeleport(PlayerTeleportEvent e) {
         Bukkit.getScheduler().runTaskLater(Practice.getInstance(), () -> {
+            if (!(e.getPlayer() instanceof Player)) return;  // ← Ignore NPCs
+
             Player player = e.getPlayer();
             Profile profile = Practice.getProfileManager().getProfiles().get(player);
+            if (profile == null) return;  // ← Fix NPE
 
             if (ServerManager.getLobby() != null) {
                 if (e.getFrom().getWorld().equals(ServerManager.getLobby().getWorld()) && e.getTo().getWorld().equals(Practice.getArenaManager().getArenasWorld())) {

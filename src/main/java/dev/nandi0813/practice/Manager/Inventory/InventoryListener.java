@@ -66,13 +66,14 @@ public class InventoryListener implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent e) {
-        if (e.getEntity() instanceof Player) {
-            Player player = (Player) e.getEntity();
-            Profile profile = Practice.getProfileManager().getProfiles().get(player);
+        if (!(e.getEntity() instanceof Player)) return;
 
-            if (profile.getStatus().equals(ProfileStatus.LOBBY) || profile.getStatus().equals(ProfileStatus.QUEUE))
-                e.setCancelled(true);
-        }
+        Player player = (Player) e.getEntity();
+        Profile profile = Practice.getProfileManager().getProfiles().get(player);
+
+        if (profile == null) return;
+
+        if (profile.getStatus().equals(ProfileStatus.LOBBY) || profile.getStatus().equals(ProfileStatus.QUEUE))
+            e.setCancelled(true);
     }
-
 }
