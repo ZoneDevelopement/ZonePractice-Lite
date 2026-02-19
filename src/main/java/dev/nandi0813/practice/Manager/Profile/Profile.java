@@ -74,7 +74,7 @@ public class Profile {
      */
     public void saveData() {
         if (Practice.getInstance().isEnabled())
-            Bukkit.getScheduler().runTaskAsynchronously(Practice.getInstance(), file::setProfileData);
+            Bukkit.getScheduler().runTask(Practice.getInstance(), file::setProfileData);
         else
             file.setProfileData();
     }
