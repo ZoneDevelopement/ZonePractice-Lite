@@ -4,9 +4,17 @@ notify-updates: true
 multi-game-support: false
 # You can set the arenas world name which contains all the arenas.
 arena-world-name: arenas
+#
+# Protection settings
+protection:
+  allow-lobby-damage: false
+  allow-lobby-inventory: false
+  allow-lobby-drop: false
+  allow-lobby-pickup: false
+  allow-lobby-hunger: false
 # Knockback modifier - it depends on the hit delay very much. You should test what is the optimal for you.
 knockback:
-  enabled: true
+  enabled: true  # true = modify knockback, false = vanilla
   combo:
     air-horizontal: 2.8
     air-vertical: 2.8

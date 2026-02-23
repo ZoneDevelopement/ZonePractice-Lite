@@ -1,5 +1,6 @@
 package dev.nandi0813.practice.Manager.Inventory;
 
+import dev.nandi0813.practice.Manager.File.ConfigManager;
 import dev.nandi0813.practice.Manager.Profile.Profile;
 import dev.nandi0813.practice.Manager.Profile.ProfileManager;
 import dev.nandi0813.practice.Manager.Profile.ProfileStatus;
@@ -21,6 +22,10 @@ public class InventoryListener implements Listener {
         ProfileManager profileManager = Practice.getProfileManager();
         Profile profile = profileManager.getProfiles().get(player);
 
+        if (ConfigManager.getBoolean("protection.allow-lobby-inventory")) {
+            return;
+        }
+
         if (!player.hasPermission("zonepractice.admin") && profile.getStatus().equals(ProfileStatus.LOBBY))
             e.setCancelled(true);
         else if (profile.getStatus().equals(ProfileStatus.QUEUE))
@@ -32,6 +37,10 @@ public class InventoryListener implements Listener {
         Player player = e.getPlayer();
         ProfileManager profileManager = Practice.getProfileManager();
         Profile profile = profileManager.getProfiles().get(player);
+
+        if (ConfigManager.getBoolean("protection.allow-lobby-drop")) {
+            return;
+        }
 
         if (!player.hasPermission("zonepractice.admin") && profile.getStatus().equals(ProfileStatus.LOBBY))
             e.setCancelled(true);
@@ -45,6 +54,10 @@ public class InventoryListener implements Listener {
         ProfileManager profileManager = Practice.getProfileManager();
         Profile profile = profileManager.getProfiles().get(player);
 
+        if (ConfigManager.getBoolean("protection.allow-lobby-pickup")) {
+            return;
+        }
+
         if (!player.hasPermission("zonepractice.admin") && profile.getStatus().equals(ProfileStatus.LOBBY))
             e.setCancelled(true);
         else if (profile.getStatus().equals(ProfileStatus.QUEUE))
@@ -56,6 +69,10 @@ public class InventoryListener implements Listener {
         if (e.getEntity() instanceof Player) {
             Player player = (Player) e.getEntity();
             Profile profile = Practice.getProfileManager().getProfiles().get(player);
+
+            if (ConfigManager.getBoolean("protection.allow-lobby-hunger")) {
+                return;
+            }
 
             if (profile.getStatus().equals(ProfileStatus.LOBBY) || profile.getStatus().equals(ProfileStatus.QUEUE)) {
                 e.setCancelled(true);
@@ -72,6 +89,10 @@ public class InventoryListener implements Listener {
         Profile profile = Practice.getProfileManager().getProfiles().get(player);
 
         if (profile == null) return;
+
+        if (ConfigManager.getBoolean("protection.allow-lobby-damage")) {
+            return;
+        }
 
         if (profile.getStatus().equals(ProfileStatus.LOBBY) || profile.getStatus().equals(ProfileStatus.QUEUE))
             e.setCancelled(true);
