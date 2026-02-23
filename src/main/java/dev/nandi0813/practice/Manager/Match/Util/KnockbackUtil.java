@@ -14,7 +14,10 @@ public class KnockbackUtil {
      * @param knockbackType The type of knockback you want to use.
      */
     public static void setPlayerKnockback(Entity player, KnockbackType knockbackType) {
-        if (!ConfigManager.getConfig().getBoolean("knockback.enabled", true)) return;
+        // Skip knockback modification if disabled
+        if (!ConfigManager.getBoolean("knockback.enabled")) {
+            return;
+        }
 
         int airhorizontal = ConfigManager.getConfig().getInt("knockback." + knockbackType.toString().toLowerCase() + ".air-horizontal");
         int airvertical = ConfigManager.getConfig().getInt("knockback." + knockbackType.toString().toLowerCase() + ".air-vertical");
