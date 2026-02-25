@@ -42,6 +42,11 @@ public class Duel {
             if (!matchStat.isSet()) matchStat.end();
         }
 
+        List<String> spectators = new ArrayList<>();
+        for (Player spectator : match.getSpectators())
+            if (!spectator.hasPermission("zonepractice.spectate.silent"))
+                spectators.add(spectator.getName());
+
         if (winner != null && loser != null) {
             List<Player> msgTo = new ArrayList<>();
             msgTo.addAll(match.getPlayers());
@@ -49,28 +54,43 @@ public class Duel {
 
             for (String line : LanguageManager.getList("match.duel.match-end")) {
                 for (Player player : msgTo) {
+
                     if (line.contains("%winner%")) {
                         TextComponent winnerComponent = new TextComponent(line.replaceAll("%winner%", winner.getName()));
-                        winnerComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.translateAlternateColorCodes('&', "&aClick to view inventory of &6" + winner.getName() + "&a.")).create()));
-                        winnerComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/matchinv " + match.getMatchID() + " " + winner.getName()));
+                        winnerComponent.setHoverEvent(new HoverEvent(
+                                HoverEvent.Action.SHOW_TEXT,
+                                new ComponentBuilder(ChatColor.translateAlternateColorCodes('&',
+                                        "&aClick to view inventory of &6" + winner.getName() + "&a.")).create()
+                        ));
+                        winnerComponent.setClickEvent(new ClickEvent(
+                                ClickEvent.Action.RUN_COMMAND,
+                                "/matchinv " + match.getMatchID() + " " + winner.getName()
+                        ));
                         player.spigot().sendMessage(winnerComponent);
+
                     } else if (line.contains("%loser%")) {
                         TextComponent loserComponent = new TextComponent(line.replaceAll("%loser%", loser.getName()));
-                        loserComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.translateAlternateColorCodes('&', "&aClick to view inventory of &6" + loser.getName() + "&a.")).create()));
-                        loserComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/matchinv " + match.getMatchID() + " " + loser.getName()));
+                        loserComponent.setHoverEvent(new HoverEvent(
+                                HoverEvent.Action.SHOW_TEXT,
+                                new ComponentBuilder(ChatColor.translateAlternateColorCodes('&',
+                                        "&aClick to view inventory of &6" + loser.getName() + "&a.")).create()
+                        ));
+                        loserComponent.setClickEvent(new ClickEvent(
+                                ClickEvent.Action.RUN_COMMAND,
+                                "/matchinv " + match.getMatchID() + " " + loser.getName()
+                        ));
                         player.spigot().sendMessage(loserComponent);
-                    } else if (line.contains("%spectators%")) {
-                        if (match.getSpectators().size() > 0) {
-                            List<String> spectators = new ArrayList<>();
-                            for (Player spectator : match.getSpectators())
-                                if (!spectator.hasPermission("zonepractice.spectate.silent"))
-                                    spectators.add(spectator.getName());
 
-                            if (!spectators.isEmpty())
-                                player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', line.replaceAll("%size%", String.valueOf(spectators.size())).replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", ""))));
+                    } else if (line.contains("%spectators%")) {
+                        if (!spectators.isEmpty()) {
+                            player.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                                    line.replaceAll("%size%", String.valueOf(spectators.size()))
+                                            .replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", ""))));
                         }
-                    } else
-                        player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', line));
+
+                    } else {
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', line));
+                    }
                 }
             }
 
