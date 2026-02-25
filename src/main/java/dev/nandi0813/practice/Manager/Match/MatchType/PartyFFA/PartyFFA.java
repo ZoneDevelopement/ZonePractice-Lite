@@ -6,7 +6,8 @@ import dev.nandi0813.practice.Manager.Match.Match;
 import dev.nandi0813.practice.Manager.Match.Util.PlayerUtil;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PartyFFA {
 
@@ -44,17 +45,34 @@ public class PartyFFA {
             for (Player player : match.getPlayers())
                 if (!player.equals(winner)) losers.add(player.getName());
 
-            for (String line : LanguageManager.getList("match.partyffa.match-end"))
+            for (String line : LanguageManager.getList("match.partyffa.match-end")) {
+
+                if (line.contains("%spectators%")) {
+                    if (!spectators.isEmpty()) {
+                        match.sendMessage(line
+                                .replaceAll("%size%", String.valueOf(spectators.size()))
+                                .replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", "")), true);
+                    }
+                    continue;
+                }
+
                 match.sendMessage(line
                         .replaceAll("%winner%", winner.getName())
-                        .replaceAll("%losers%", losers.toString()
-                                .replace("[", "").replace("]", "")), true);
+                        .replaceAll("%losers%", losers.toString().replace("[", "").replace("]", "")), true);
+            }
         } else {
-            for (String line : LanguageManager.getList("match.partyffa.match-end-draw"))
-                match.sendMessage(line
+            for (String line : LanguageManager.getList("match.partyffa.match-end-draw")) {
+
+                if (line.contains("%spectators%")) {
+                    if (!spectators.isEmpty()) {
+                        match.sendMessage(line
                                 .replaceAll("%size%", String.valueOf(spectators.size()))
-                                .replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", "")),
-                        true);
+                                .replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", "")), true);
+                    }
+                } else {
+                    match.sendMessage(line, true);
+                }
+            }
         }
     }
 
@@ -68,7 +86,9 @@ public class PartyFFA {
      */
     public static void killPlayer(Match match, Player player, boolean message) {
         if (message)
-            match.sendMessage(LanguageManager.getString("match.partyffa.player-die").replaceAll("%player%", player.getName()), true);
+            match.sendMessage(LanguageManager.getString("match.partyffa.player-die")
+                    .replaceAll("%player%", player.getName()), true);
+
         match.getAlivePlayers().remove(player);
 
         if (player.isOnline())
@@ -78,5 +98,4 @@ public class PartyFFA {
             match.getRoundManager().endRound(match.getAlivePlayers().stream().findAny().get());
         }
     }
-
 }

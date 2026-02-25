@@ -80,21 +80,43 @@ public class PartySplit {
             }
 
             for (String line : LanguageManager.getList("match.partysplit.match-end")) {
+
+                if (line.contains("%spectators%")) {
+                    if (!spectators.isEmpty()) {
+                        match.sendMessage(line
+                                        .replaceAll("%size%", String.valueOf(spectators.size()))
+                                        .replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", ""))
+                                        .replaceAll("%winnerTeam%", match.getTeams().get(winner).getName())
+                                        .replaceAll("%winnerPlayers%", winners.toString().replace("[", "").replace("]", ""))
+                                        .replaceAll("%loserTeam%", TeamUtil.getOppositeTeam(match.getTeams().get(winner)).getName())
+                                        .replaceAll("%loserPlayers%", losers.toString().replace("[", "").replace("]", "")),
+                                true);
+                    }
+                    continue;
+                }
+
                 match.sendMessage(line
-                                .replaceAll("%size%", String.valueOf(spectators.size()))
-                                .replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", ""))
                                 .replaceAll("%winnerTeam%", match.getTeams().get(winner).getName())
                                 .replaceAll("%winnerPlayers%", winners.toString().replace("[", "").replace("]", ""))
                                 .replaceAll("%loserTeam%", TeamUtil.getOppositeTeam(match.getTeams().get(winner)).getName())
-                                .replaceAll("%loserPlayers%", losers.toString().replace("[", "").replace("]", ""))
-                        , true);
-            }
-        } else {
-            for (String line : LanguageManager.getList("match.partysplit.match-end-draw"))
-                match.sendMessage(line
-                                .replaceAll("%size%", String.valueOf(spectators.size()))
-                                .replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", "")),
+                                .replaceAll("%loserPlayers%", losers.toString().replace("[", "").replace("]", "")),
                         true);
+            }
+
+        } else {
+            for (String line : LanguageManager.getList("match.partysplit.match-end-draw")) {
+
+                if (line.contains("%spectators%")) {
+                    if (!spectators.isEmpty()) {
+                        match.sendMessage(line
+                                        .replaceAll("%size%", String.valueOf(spectators.size()))
+                                        .replaceAll("%spectators%", spectators.toString().replace("[", "").replace("]", "")),
+                                true);
+                    }
+                } else {
+                    match.sendMessage(line, true);
+                }
+            }
         }
     }
 
