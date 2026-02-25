@@ -270,6 +270,8 @@ public class Match {
             if (removeSpectator)
                 spectators.remove(player);
 
+            player.setMaximumNoDamageTicks(20);
+
             Practice.getInventoryManager().getSpawnInventory().setInventory(player, true);
         }
     }
